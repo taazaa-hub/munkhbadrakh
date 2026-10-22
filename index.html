@@ -333,6 +333,9 @@
   #qpayLinks a{ font-size:12px; font-weight:600; padding:6px 10px; border:1.5px solid var(--ink);
     border-radius:3px; color:var(--ink); text-decoration:none; }
   #qpayStatus{ font-size:13px; color:#5a5142; margin-top:10px; }
+  .toot-picker{ display:none; flex-wrap:wrap; align-items:center; gap:6px; padding:14px 22px 0; }
+  .toot-picker .lbl{ font-size:12px; color:#5a5142; margin-right:4px; }
+  .toot-picker .copy-btn.active{ background:var(--ink); color:var(--paper); }
   .foot-note{
     text-align:center;
     color:#8fc2bf;
@@ -362,6 +365,8 @@
     </div>
 
     <div id="status" class="status">Утасны дугаараа оруулаад &ldquo;Төлбөр харах&rdquo; товч дарна уу.</div>
+
+    <div id="tootPicker" class="toot-picker"></div>
 
     <div id="result" class="result">
       <div class="receipt-head">
@@ -571,14 +576,32 @@ function setStatus(msg, isError){
   statusEl.style.display = 'block';
   statusEl.classList.toggle('error', !!isError);
   resultEl.classList.remove('show');
+  tootPickerEl.style.display = 'none';
 }
 
 let currentRow = null;
+let currentRows = [];   // тухайн утсанд бүртгэлтэй бүх тоот (нэг утас хэд хэдэн тоотод байж болно)
 let pollTimer = null;
 function stopPoll(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 
+const tootPickerEl = document.getElementById('tootPicker');
+function renderPicker(){
+  if (currentRows.length < 2){ tootPickerEl.style.display = 'none'; return; }
+  tootPickerEl.innerHTML = '<span class="lbl">Тоот:</span>';
+  currentRows.forEach(r => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'copy-btn' + (currentRow && r.toot === currentRow.toot ? ' active' : '');
+    b.textContent = r.toot;
+    b.addEventListener('click', () => render(r));
+    tootPickerEl.appendChild(b);
+  });
+  tootPickerEl.style.display = 'flex';
+}
+
 function render(row){
   currentRow = row;
+  renderPicker();
   stopPoll();
   document.getElementById('qpayPanel').style.display = 'none';
   document.getElementById('qpayBtn').disabled = false;
@@ -689,11 +712,17 @@ function startPoll(){
   let tries = 0;
   pollTimer = setInterval(async () => {
     tries++;
-    const { data } = await supa.rpc('get_bill', {
+    const { data } = await supa.rpc('get_bills', {
       p_sar: currentRow.sar,
       p_utas: String(currentRow.utas)
     });
-    if (data && data.paid){ stopPoll(); render(data); return; }
+    const fresh = (data || []).find(r => r.toot === currentRow.toot);
+    if (fresh && fresh.paid){
+      stopPoll();
+      currentRows = currentRows.map(r => r.toot === fresh.toot ? fresh : r);
+      render(fresh);
+      return;
+    }
     if (tries > 120) stopPoll(); // 10 минут
   }, 5000);
 }
@@ -710,7 +739,7 @@ document.getElementById('qpayBtn').addEventListener('click', async () => {
   stat.textContent = 'Нэхэмжлэх үүсгэж байна…';
 
   const { data, error } = await supa.functions.invoke('qpay-create', {
-    body: { sar: currentRow.sar, phone: String(currentRow.utas) }
+    body: { sar: currentRow.sar, phone: String(currentRow.utas), toot: String(currentRow.toot) }
   });
   if (error || !data || data.error || !data.qr_image){
     stat.textContent = (data && data.error) ? data.error : 'QPay нэхэмжлэх үүсгэж чадсангүй. Дараа дахин оролдоно уу.';
@@ -749,9 +778,9 @@ async function search(){
   searchBtn.disabled = true;
   setStatus('Хайж байна…');
 
-  // Нэг утасны дугаар хоёр тоотод бүртгэлтэй тохиолдол Excel-д байдаг тул
-  // maybeSingle() биш, эхний мөрийг авна (эс тэгвээс алдаа буцаана).
-  const { data, error } = await supa.rpc('get_bill', {
+  // Нэг утасны дугаар хэд хэдэн тоотод бүртгэлтэй байж болно — бүгдийг нь
+  // аваад, олон бол тоот сонгох товчлуур харуулна.
+  const { data, error } = await supa.rpc('get_bills', {
     p_sar: sar,
     p_utas: phone.replace(/\D/g, '')
   });
@@ -759,8 +788,9 @@ async function search(){
   searchBtn.disabled = false;
 
   if (error){ setStatus('Алдаа гарлаа: ' + error.message, true); return; }
-  if (!data){ setStatus(sar + ' сард ' + phone + ' дугаартай бүртгэл олдсонгүй.', true); return; }
-  render(data);
+  if (!data || !data.length){ setStatus(sar + ' сард ' + phone + ' дугаартай бүртгэл олдсонгүй.', true); return; }
+  currentRows = data;
+  render(data[0]);
 }
 
 searchBtn.addEventListener('click', search);

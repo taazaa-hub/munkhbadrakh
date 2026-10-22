@@ -29,19 +29,35 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
     steps:
-      - uses: actions/checkout@v4
+      # Secret-үүд нэмэгдээгүй бол улаан болохгүй, анхааруулга үлдээгээд алгасна.
+      - name: Check secrets
+        id: secrets
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ] && [ -n "$SUPABASE_PROJECT_REF" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::SUPABASE_ACCESS_TOKEN / SUPABASE_DB_PASSWORD / SUPABASE_PROJECT_REF repo secrets тохируулаагүй тул deploy алгаслаа."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - uses: supabase/setup-cli@v1
+      - if: steps.secrets.outputs.ok == 'true'
+        uses: actions/checkout@v4
+
+      - if: steps.secrets.outputs.ok == 'true'
+        uses: supabase/setup-cli@v1
         with:
           version: 2.121.0
 
       - name: Link project
+        if: steps.secrets.outputs.ok == 'true'
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Push migrations
+        if: steps.secrets.outputs.ok == 'true'
         run: supabase db push --password "$SUPABASE_DB_PASSWORD"
 
       - name: Deploy Edge Functions
+        if: steps.secrets.outputs.ok == 'true'
         run: |
           supabase functions deploy qpay-create --project-ref "$SUPABASE_PROJECT_REF"
           supabase functions deploy qpay-callback --project-ref "$SUPABASE_PROJECT_REF"

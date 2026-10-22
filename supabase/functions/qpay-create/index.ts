@@ -1,4 +1,4 @@
-// QPay нэхэмжлэх үүсгэх. Браузераас зөвхөн { sar, phone } авна.
+// QPay нэхэмжлэх үүсгэх. Браузераас зөвхөн { sar, phone, toot? } авна.
 // Дүнг DB-ээс өөрөө авна (браузерын илгээсэн дүнд хэзээ ч найдахгүй).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const sar = String(body.sar ?? "");
     const utas = String(body.phone ?? "").replace(/\D/g, "");
-    if (!/^\d{4}-\d{2}$/.test(sar) || !/^\d{8}$/.test(utas)) {
+    const toot = body.toot == null ? "" : String(body.toot);
+    if (!/^\d{4}-\d{2}$/.test(sar) || !/^\d{8}$/.test(utas) || (toot && !/^\d{1,8}$/.test(toot))) {
       return json({ error: "Буруу өгөгдөл" }, 400);
     }
 
@@ -60,9 +61,10 @@ Deno.serve(async (req) => {
       requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
 
-    // index.html-тэй ЯГ адил мөрийг олохын тулд ижил get_bill RPC-г ашиглана
-    // (утасны дугаарыг DB талд цэвэрлэж харьцуулдаг).
-    const { data: bill, error: billErr } = await db.rpc("get_bill", {
+    // index.html-тэй ЯГ адил мөрүүдийг олохын тулд ижил get_bills RPC-г ашиглана
+    // (утасны дугаарыг DB талд цэвэрлэж харьцуулдаг). Тоотыг зөвхөн тухайн
+    // утсанд бүртгэлтэй тоотуудаас сонгоно — өөр айлын тоотыг төлүүлэхгүй.
+    const { data: bills, error: billErr } = await db.rpc("get_bills", {
       p_sar: sar,
       p_utas: utas,
     });
@@ -72,6 +74,8 @@ Deno.serve(async (req) => {
       console.error("water_bills select error", billErr);
       return json({ error: "Серверийн алдаа" }, 500);
     }
+    const list = (bills ?? []) as { toot: string; niit_tolbor: number | null; paid: boolean | null }[];
+    const bill = toot ? list.find((b) => String(b.toot) === toot) : list[0];
     if (!bill) return json({ error: "Бүртгэл олдсонгүй" }, 404);
     if (bill.paid) return json({ error: "Энэ сарын төлбөр төлөгдсөн байна" }, 409);
 

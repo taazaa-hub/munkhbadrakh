@@ -1,0 +1,5 @@
+# Нийтэд зөвхөн эдгээр 3 файл гарна. Үндсэн хавтсыг бүхэлд нь publish хийвэл
+# import_*.sql, zadargaa_*.js (айлуудын нэр, утас, регистр) болон .env ил гарна.
+[build]
+  publish = "dist"
+  command = "rm -rf dist && mkdir dist && cp index.html admin.html config.js dist/"

@@ -16,3 +16,6 @@ Thumbs.db
 
 # Postman collections may contain merchant credentials and bearer tokens
 QPay API v2.postman_collection*.json
+
+# Netlify-д гарах бэлэн файлууд (netlify.toml-ын build үүсгэнэ)
+dist/
