@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Мөнхбадрах ОСК — Усны төлбөр</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e2226;
+    --paper:#f4f1e8;
+    --paper-2:#eae5d6;
+    --teal:#0f6b73;
+    --teal-deep:#0a4a50;
+    --amber:#c07830;
+    --line: rgba(14,34,38,0.14);
+    --good:#2f7d5a;
+    --radius: 4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--teal-deep);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.05), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(255,255,255,0.04), transparent 45%);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 40px 16px 80px;
+  }
+  .wrap{ width:100%; max-width:520px; }
+
+  .masthead{
+    text-align:center;
+    color:#eef7f6;
+    margin-bottom:28px;
+  }
+  .masthead .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:#9fd2cf;
+    margin-bottom:8px;
+  }
+  .masthead h1{
+    font-size:26px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .masthead p{
+    margin:8px 0 0;
+    font-size:14px;
+    color:#b9dcda;
+  }
+
+  .card{
+    background:var(--paper);
+    border-radius: var(--radius);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    overflow:hidden;
+  }
+
+  .search{
+    padding:22px 22px 20px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .search label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--teal-deep);
+    margin-bottom:6px;
+  }
+  .search-row{
+    display:flex;
+    gap:8px;
+  }
+  .search input[type=text]{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px;
+    font-weight:600;
+    padding:12px 14px;
+    border:2px solid var(--ink);
+    border-radius: var(--radius);
+    background:#fff;
+    color:var(--ink);
+    letter-spacing:0.04em;
+    min-width:0;
+  }
+  .search input[type=text]:focus{
+    outline:3px solid #ffd77a;
+    outline-offset:0;
+  }
+  .search select{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    padding:0 10px;
+    border:2px solid var(--ink);
+    border-radius: var(--radius);
+    background:#fff;
+    color:var(--ink);
+  }
+  .search button{
+    margin-top:12px;
+    width:100%;
+    background:var(--ink);
+    color:#f4f1e8;
+    border:none;
+    border-radius: var(--radius);
+    padding:13px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    transition: background 0.15s ease;
+  }
+  .search button:hover{ background: var(--teal-deep); }
+  .search button:disabled{ opacity:0.5; cursor:default; }
+
+  .status{
+    padding:26px 22px;
+    text-align:center;
+    font-size:14px;
+    color:#5a5142;
+  }
+  .status.error{ color:#9b3b2c; }
+
+  .result{ display:none; }
+  .result.show{ display:block; }
+
+  .receipt-head{
+    padding:18px 22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    background: var(--paper-2);
+  }
+  .receipt-head .toot{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    font-weight:700;
+    color:var(--teal-deep);
+  }
+  .receipt-head .name{
+    font-size:13px;
+    color:#5a5142;
+    text-align:right;
+  }
+
+  .section{
+    padding:18px 22px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .section-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--teal-deep);
+    margin-bottom:14px;
+  }
+  .section-title .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--teal);
+    display:inline-block;
+  }
+  .section-title.heat .dot{ background: var(--amber); }
+
+  .area-row{
+    padding:10px 22px;
+    background: var(--paper-2);
+    font-size:12.5px;
+    color:#5a5142;
+    border-bottom: 1px dashed var(--line);
+  }
+  .area-row span{ font-family:'IBM Plex Mono', monospace; font-weight:600; color:var(--ink); }
+  .status-badge{ font-family:'IBM Plex Sans', sans-serif !important; font-weight:700 !important; font-size:11px; padding:3px 9px; border-radius:3px; text-transform:uppercase; letter-spacing:0.04em; }
+  .status-badge.paid{ background:var(--good); color:#fff; }
+  .status-badge.unpaid{ background:#9b3b2c; color:#fff; }
+
+  .table-wrap{
+    overflow-x:auto;
+    margin-bottom:12px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+  }
+  table.itemized{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+    min-width:420px;
+  }
+  table.itemized th{
+    text-align:right;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:#8b8471;
+    font-weight:600;
+    padding:8px 8px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper-2);
+  }
+  table.itemized th:first-child, table.itemized td:first-child{ text-align:left; }
+  table.itemized td{
+    text-align:right;
+    padding:8px 8px;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink);
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  table.itemized td:first-child{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+  }
+  table.itemized tr:last-child td{ border-bottom:none; }
+
+  .line{
+    display:flex;
+    justify-content:space-between;
+    padding:7px 0;
+    font-size:13.5px;
+  }
+  .line .k{ color:#5a5142; }
+  .line .v{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+
+  .subtotal{
+    display:flex;
+    justify-content:space-between;
+    padding-top:10px;
+    margin-top:4px;
+    border-top:1px solid var(--line);
+    font-size:14px;
+    font-weight:700;
+  }
+  .subtotal .v{ font-family:'IBM Plex Mono', monospace; }
+
+  .total{
+    padding:22px;
+    background: var(--ink);
+    color: var(--paper);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .total .k{ font-size:14px; letter-spacing:0.03em; color:#c8d8d6; }
+  .total .v{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .total .v .unit{ font-size:14px; font-weight:500; margin-left:4px; color:#9fd2cf; }
+
+  .pay{
+    padding:20px 22px 22px;
+    background: var(--paper-2);
+  }
+  .pay-title{
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--teal-deep);
+    margin-bottom:12px;
+  }
+  .pay-row + .pay-row{ margin-top:12px; }
+  .pay-label{
+    font-size:11.5px;
+    color:#8b8471;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    margin-bottom:4px;
+  }
+  .pay-value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    color:var(--ink);
+    word-break:break-word;
+  }
+  .pay-value.emphasis{
+    font-size:17px;
+    font-weight:700;
+    color:var(--teal-deep);
+  }
+  .pay-value-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .copy-btn{
+    flex:none;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:12px;
+    font-weight:600;
+    padding:6px 10px;
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .copy-btn:hover{ background:var(--ink); color:var(--paper); }
+  .copy-btn.copied{ background:var(--good); border-color:var(--good); color:#fff; }
+
+  .qpay-btn{
+    width:100%; margin-top:14px; background:#0f6b73; color:#fff; border:none;
+    border-radius:4px; padding:13px; font-family:'IBM Plex Sans', sans-serif;
+    font-size:15px; font-weight:600; cursor:pointer;
+  }
+  .qpay-btn:disabled{ opacity:0.5; cursor:default; }
+  #qpayPanel{ display:none; text-align:center; margin-top:14px; }
+  #qpayPanel img{ width:220px; max-width:100%; background:#fff; padding:8px; border-radius:4px; }
+  #qpayLinks{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:10px; }
+  #qpayLinks a{ font-size:12px; font-weight:600; padding:6px 10px; border:1.5px solid var(--ink);
+    border-radius:3px; color:var(--ink); text-decoration:none; }
+  #qpayStatus{ font-size:13px; color:#5a5142; margin-top:10px; }
+  .foot-note{
+    text-align:center;
+    color:#8fc2bf;
+    font-size:12px;
+    margin-top:18px;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Орон сууцны түр контор</div>
+    <h1>Мөнхбадрах</h1>
+    <p>Сарын дулаан, усны төлбөрөө утасны дугаараараа шалгана уу</p>
+  </div>
+
+  <div class="card">
+    <div class="search">
+      <label for="phone">Утасны дугаар</label>
+      <div class="search-row">
+        <input type="text" id="phone" inputmode="numeric" placeholder="Утасны дугаар" autocomplete="off" />
+        <select id="sar"></select>
+      </div>
+      <button id="searchBtn">Төлбөр харах</button>
+    </div>
+
+    <div id="status" class="status">Утасны дугаараа оруулаад &ldquo;Төлбөр харах&rdquo; товч дарна уу.</div>
+
+    <div id="result" class="result">
+      <div class="receipt-head">
+        <div class="toot" id="r-toot"></div>
+        <div class="name" id="r-name"></div>
+      </div>
+      <div class="area-row">
+        Талбай: <span id="r-area"></span> м.кв
+        <span id="r-pay-status" style="float:right;"></span>
+      </div>
+
+      <div id="r-summary-view" style="display:none; padding:20px 22px;">
+        <div class="line"><div class="k">Тооцоологдсон төлбөр</div><div class="v" id="r-sum-tolbor"></div></div>
+        <div class="line"><div class="k">Төлсөн дүн</div><div class="v" id="r-sum-tololt"></div></div>
+        <div class="subtotal"><div class="k">Үлдэгдэл</div><div class="v" id="r-sum-uldegdel"></div></div>
+        <div style="font-size:12px; color:#8b8471; margin-top:10px;">Энэ сард тоолуурын дэлгэрэнгүй задаргаа алга, зөвхөн мөнгөн дүнгийн товч харагдаж байна.</div>
+      </div>
+
+      <div id="r-detail-view">
+      <div class="section">
+        <div class="section-title"><span class="dot"></span>Хэрэглээний ус</div>
+        <div class="table-wrap">
+          <table class="itemized">
+            <thead>
+              <tr>
+                <th>Зүйл</th>
+                <th>Өмнөх</th>
+                <th>Одоо</th>
+                <th>Зөрүү</th>
+                <th>Нэгж үнэ</th>
+                <th>Нийт</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Хүйтэн ус</td>
+                <td id="r-cold-prev"></td>
+                <td id="r-cold-now"></td>
+                <td id="r-cold-diff"></td>
+                <td id="r-cold-unit"></td>
+                <td id="r-cold-total"></td>
+              </tr>
+              <tr>
+                <td>Халуун ус</td>
+                <td id="r-hot-prev"></td>
+                <td id="r-hot-now"></td>
+                <td id="r-hot-diff"></td>
+                <td id="r-hot-unit"></td>
+                <td id="r-hot-total"></td>
+              </tr>
+              <tr>
+                <td>Бохир ус</td>
+                <td>—</td>
+                <td>—</td>
+                <td id="r-sewage-diff"></td>
+                <td id="r-sewage-unit"></td>
+                <td id="r-sewage-total"></td>
+              </tr>
+              <tr>
+                <td>Суурь хураамж</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td id="r-base"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="subtotal"><div class="k">Нийт усны төлбөр</div><div class="v" id="r-water-total"></div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title heat"><span class="dot"></span>Дулааны төлбөр</div>
+        <div class="table-wrap">
+          <table class="itemized">
+            <thead>
+              <tr>
+                <th>Зүйл</th>
+                <th>Өмнөх</th>
+                <th>Одоо</th>
+                <th>Зөрүү</th>
+                <th>Нэгж үнэ</th>
+                <th>Нийт</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Суурь үнэ</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td id="r-heat-base"></td>
+              </tr>
+              <tr>
+                <td>Талбайн төлбөр (м.кв)</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td id="r-heat-m2-unit">—</td>
+                <td id="r-heat-m2"></td>
+              </tr>
+              <tr>
+                <td>Халуун ус (тоолуур)</td>
+                <td id="r-heat-hot-prev"></td>
+                <td id="r-heat-hot-now"></td>
+                <td id="r-heat-hot-diff"></td>
+                <td id="r-heat-hot-unit"></td>
+                <td id="r-heat-hotmeter"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="subtotal"><div class="k">Дулааны нийт дүн</div><div class="v" id="r-heat-total"></div></div>
+      </div>
+
+      <div class="section">
+        <div class="line"><div class="k">Конторын суурь хураамж</div><div class="v" id="r-kontor-suuri"></div></div>
+        <div class="line"><div class="k">НӨАТ</div><div class="v" id="r-noat"></div></div>
+      </div>
+      </div>
+
+      <div class="total">
+        <div class="k">Нийт төлбөл зохих дүн</div>
+        <div class="v" id="r-grand-total">— <span class="unit">₮</span></div>
+      </div>
+
+      <div class="pay">
+        <div class="pay-title">Төлбөр хийх</div>
+        <div class="pay-row">
+          <div class="pay-label">Данс</div>
+          <div class="pay-value-row">
+            <div class="pay-value" id="r-pay-account">Төрийн банк 160034888888807788</div>
+            <button class="copy-btn" data-copy-target="r-pay-account" type="button">Хуулах</button>
+          </div>
+        </div>
+        <div class="pay-row">
+          <div class="pay-label">Хүлээн авагч</div>
+          <div class="pay-value">Мөнхбадрах орон сууцны контор ХХК</div>
+        </div>
+        <div class="pay-row">
+          <div class="pay-label">Утга</div>
+          <div class="pay-value-row">
+            <div class="pay-value emphasis" id="r-pay-utga">—</div>
+            <button class="copy-btn" data-copy-target="r-pay-utga" type="button">Хуулах</button>
+          </div>
+        </div>
+        <div id="qpayBox" style="display:none;">
+          <button id="qpayBtn" class="qpay-btn" type="button">QPay-ээр төлөх</button>
+          <div id="qpayPanel">
+            <img id="qpayQr" alt="QPay QR" />
+            <div id="qpayLinks"></div>
+            <div id="qpayStatus"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot-note">Мэдээлэл буруу бол контортойгоо холбогдоно уу.<br><a href="admin.html" style="color:#6fa6a3;">Admin</a></div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+const fmt = n => (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toLocaleString('mn-MN');
+
+// Тарифууд (шинэ нь эхэнд). Мөр бүрд DB-д орсон "Нийт усны төлбөр"-тэй
+// таарсан тарифыг автоматаар сонгоно, тиймээс хуучин сарууд өөрчлөгдөхгүй.
+const TARIFFS = [
+  { cold:2560, hot:2560, sewage:2730, heatHot:3360, heatM2:680 },   // шинэ тариф
+  { cold:1970, hot:1970, sewage:2100, heatHot:3200, heatM2:null },  // 2026 оны өмнөх тариф
+];
+const KONTOR_SUURI = 20000;
+
+function pickTariff(row){
+  const total = row.niit_us_tolbor;
+  if (total === null || total === undefined) return TARIFFS[0];
+  for (const t of TARIFFS){
+    const calc = (row.suuri_huraamj ?? 0)
+      + (row.hooiten_zuruu ?? 0) * t.cold
+      + (row.haluun_zuruu ?? 0) * t.hot
+      + (row.bohir_us ?? 0) * t.sewage;
+    if (Math.abs(calc - total) <= 1) return t;
+  }
+  return TARIFFS[0];
+}
+
+const statusEl = document.getElementById('status');
+const resultEl = document.getElementById('result');
+const phoneInput = document.getElementById('phone');
+const sarSelect = document.getElementById('sar');
+const searchBtn = document.getElementById('searchBtn');
+
+async function loadMonths(){
+  const { data, error } = await supa.rpc('list_months');
+  if (error || !data || !data.length) return;
+  sarSelect.innerHTML = data.map(r => `<option value="${r.sar}">${r.sar}</option>`).join('');
+}
+loadMonths();
+
+function setStatus(msg, isError){
+  statusEl.textContent = msg;
+  statusEl.style.display = 'block';
+  statusEl.classList.toggle('error', !!isError);
+  resultEl.classList.remove('show');
+}
+
+let currentRow = null;
+let pollTimer = null;
+function stopPoll(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+
+function render(row){
+  currentRow = row;
+  stopPoll();
+  document.getElementById('qpayPanel').style.display = 'none';
+  document.getElementById('qpayBtn').disabled = false;
+  document.getElementById('qpayBox').style.display =
+    (!row.paid && Number(row.niit_tolbor) > 0) ? 'block' : 'none';
+  document.getElementById('r-toot').textContent = 'Тоот ' + row.toot;
+  document.getElementById('r-name').textContent = [row.ovog, row.ner].filter(Boolean).join(' ');
+  document.getElementById('r-area').textContent = fmt(row.niit_hemjee);
+
+  const payBadge = document.getElementById('r-pay-status');
+  if (row.paid){
+    payBadge.innerHTML = '<span class="status-badge paid">Төлсөн</span>';
+  } else {
+    payBadge.innerHTML = '<span class="status-badge unpaid">Төлөгдөөгүй</span>';
+  }
+
+  const isSummaryOnly = (row.niit_us_tolbor === null || row.niit_us_tolbor === undefined) &&
+                        (row.dulaan_niit === null || row.dulaan_niit === undefined);
+
+  if (isSummaryOnly){
+    document.getElementById('r-summary-view').style.display = 'block';
+    document.getElementById('r-detail-view').style.display = 'none';
+    document.getElementById('r-sum-tolbor').textContent = fmt(row.niit_tolbor) + ' ₮';
+    document.getElementById('r-sum-tololt').textContent = fmt(row.tolson_dun) + ' ₮';
+    document.getElementById('r-sum-uldegdel').textContent = fmt(row.uldegdel) + ' ₮';
+    document.getElementById('r-grand-total').innerHTML = fmt(row.niit_tolbor) + ' <span class="unit">₮</span>';
+    document.getElementById('r-pay-utga').textContent = row.toot;
+    statusEl.style.display = 'none';
+    resultEl.classList.add('show');
+    return;
+  } else {
+    document.getElementById('r-summary-view').style.display = 'none';
+    document.getElementById('r-detail-view').style.display = 'block';
+  }
+
+  const T = pickTariff(row);
+
+  const coldDiff = row.hooiten_zuruu;
+  const coldTotal = (coldDiff ?? 0) * T.cold;
+  document.getElementById('r-cold-prev').textContent = fmt(row.hooiten_umnoh);
+  document.getElementById('r-cold-now').textContent = fmt(row.hooiten_odoo);
+  document.getElementById('r-cold-diff').textContent = fmt(coldDiff) + ' м³';
+  document.getElementById('r-cold-unit').textContent = fmt(T.cold) + ' ₮';
+  document.getElementById('r-cold-total').textContent = fmt(coldTotal) + ' ₮';
+
+  const hotDiff = row.haluun_zuruu;
+  const hotTotal = (hotDiff ?? 0) * T.hot;
+  document.getElementById('r-hot-prev').textContent = fmt(row.haluun_umnoh);
+  document.getElementById('r-hot-now').textContent = fmt(row.haluun_odoo);
+  document.getElementById('r-hot-diff').textContent = fmt(hotDiff) + ' м³';
+  document.getElementById('r-hot-unit').textContent = fmt(T.hot) + ' ₮';
+  document.getElementById('r-hot-total').textContent = fmt(hotTotal) + ' ₮';
+
+  const sewageDiff = row.bohir_us;
+  const sewageTotal = (sewageDiff ?? 0) * T.sewage;
+  document.getElementById('r-sewage-diff').textContent = fmt(sewageDiff) + ' м³';
+  document.getElementById('r-sewage-unit').textContent = fmt(T.sewage) + ' ₮';
+  document.getElementById('r-sewage-total').textContent = fmt(sewageTotal) + ' ₮';
+
+  document.getElementById('r-base').textContent = fmt(row.suuri_huraamj) + ' ₮';
+  document.getElementById('r-water-total').textContent = fmt(row.niit_us_tolbor) + ' ₮';
+
+  document.getElementById('r-heat-base').textContent = fmt(row.dulaan_suuri) + ' ₮';
+  document.getElementById('r-heat-hot-prev').textContent = fmt(row.haluun_umnoh) + ' м³';
+  document.getElementById('r-heat-hot-now').textContent = fmt(row.haluun_odoo) + ' м³';
+  document.getElementById('r-heat-m2').textContent = fmt(row.dulaan_tolbor_m2) + ' ₮';
+  document.getElementById('r-heat-m2-unit').textContent = T.heatM2 ? fmt(T.heatM2) + ' ₮' : '—';
+  const hhDiff = row.haluun_zuruu;
+  document.getElementById('r-heat-hot-diff').textContent = fmt(hhDiff) + ' м³';
+  const hhUnit = (hhDiff > 0 && row.haluun_us_tooluur_heat != null)
+    ? Math.round(row.haluun_us_tooluur_heat / hhDiff) : T.heatHot;
+  document.getElementById('r-heat-hot-unit').textContent = fmt(hhUnit) + ' ₮';
+  document.getElementById('r-heat-hotmeter').textContent = fmt(row.haluun_us_tooluur_heat) + ' ₮';
+  document.getElementById('r-heat-total').textContent = fmt(row.dulaan_niit) + ' ₮';
+
+  const noat = Math.round((row.niit_tolbor ?? 0) - (row.niit_us_tolbor ?? 0) - (row.dulaan_niit ?? 0) - KONTOR_SUURI);
+  document.getElementById('r-kontor-suuri').textContent = fmt(KONTOR_SUURI) + ' ₮';
+  document.getElementById('r-noat').textContent = fmt(noat) + ' ₮';
+
+  document.getElementById('r-grand-total').innerHTML = fmt(row.niit_tolbor) + ' <span class="unit">₮</span>';
+
+  document.getElementById('r-pay-utga').textContent = row.toot;
+
+  statusEl.style.display = 'none';
+  resultEl.classList.add('show');
+}
+
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const target = document.getElementById(btn.dataset.copyTarget);
+    if (!target) return;
+    try {
+      await navigator.clipboard.writeText(target.textContent.trim());
+      const original = btn.textContent;
+      btn.textContent = 'Хуулсан ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+    } catch (e) {
+      alert('Хуулж чадсангүй. Гараар сонгож хуулна уу.');
+    }
+  });
+});
+
+// ── QPay ─────────────────────────────────────────────────────────────
+// Төлбөр төлөгдсөнийг QPay-ээс биш, өөрийн DB-ээс (callback шинэчилсэн paid) шалгана.
+function startPoll(){
+  stopPoll();
+  let tries = 0;
+  pollTimer = setInterval(async () => {
+    tries++;
+    const { data } = await supa.rpc('get_bill', {
+      p_sar: currentRow.sar,
+      p_utas: String(currentRow.utas)
+    });
+    if (data && data.paid){ stopPoll(); render(data); return; }
+    if (tries > 120) stopPoll(); // 10 минут
+  }, 5000);
+}
+
+document.getElementById('qpayBtn').addEventListener('click', async () => {
+  if (!currentRow) return;
+  const btn = document.getElementById('qpayBtn');
+  const panel = document.getElementById('qpayPanel');
+  const stat = document.getElementById('qpayStatus');
+  btn.disabled = true;
+  panel.style.display = 'block';
+  document.getElementById('qpayQr').style.display = 'none';
+  document.getElementById('qpayLinks').innerHTML = '';
+  stat.textContent = 'Нэхэмжлэх үүсгэж байна…';
+
+  const { data, error } = await supa.functions.invoke('qpay-create', {
+    body: { sar: currentRow.sar, phone: String(currentRow.utas) }
+  });
+  if (error || !data || data.error || !data.qr_image){
+    stat.textContent = (data && data.error) ? data.error : 'QPay нэхэмжлэх үүсгэж чадсангүй. Дараа дахин оролдоно уу.';
+    btn.disabled = false;
+    return;
+  }
+
+  const img = document.getElementById('qpayQr');
+  img.src = 'data:image/png;base64,' + data.qr_image;
+  img.style.display = 'inline-block';
+
+  const links = document.getElementById('qpayLinks');
+  (data.deeplinks || []).forEach(d => {
+    if (!d.link) return;
+    const a = document.createElement('a');
+    a.href = d.link;
+    a.textContent = d.description || d.name || 'Банк';
+    links.appendChild(a);
+  });
+  if (data.short_url){
+    const a = document.createElement('a');
+    a.href = data.short_url; a.target = '_blank'; a.rel = 'noopener';
+    a.textContent = 'QPay линк';
+    links.appendChild(a);
+  }
+  stat.textContent = fmt(data.amount) + ' ₮ — банкны апп-аараа QR уншуулж төлнө үү. Төлөгдсөн даруйд энд автоматаар шинэчлэгдэнэ.';
+  startPoll();
+});
+
+async function search(){
+  const phone = phoneInput.value.trim();
+  const sar = sarSelect.value;
+  if (!phone){ setStatus('Утасны дугаараа оруулна уу.', true); return; }
+  if (!sar){ setStatus('Одоогоор дата ороогүй байна.', true); return; }
+
+  searchBtn.disabled = true;
+  setStatus('Хайж байна…');
+
+  // Нэг утасны дугаар хоёр тоотод бүртгэлтэй тохиолдол Excel-д байдаг тул
+  // maybeSingle() биш, эхний мөрийг авна (эс тэгвээс алдаа буцаана).
+  const { data, error } = await supa.rpc('get_bill', {
+    p_sar: sar,
+    p_utas: phone.replace(/\D/g, '')
+  });
+
+  searchBtn.disabled = false;
+
+  if (error){ setStatus('Алдаа гарлаа: ' + error.message, true); return; }
+  if (!data){ setStatus(sar + ' сард ' + phone + ' дугаартай бүртгэл олдсонгүй.', true); return; }
+  render(data);
+}
+
+searchBtn.addEventListener('click', search);
+phoneInput.addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+</script>
+</body>
+</html>

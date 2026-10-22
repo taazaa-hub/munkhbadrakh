@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Мөнхбадрах ОСК</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e2226;
+    --paper:#f4f1e8;
+    --teal:#0f6b73;
+    --teal-deep:#0a4a50;
+    --line: rgba(14,34,38,0.14);
+    --good:#2f7d5a;
+    --bad:#9b3b2c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:var(--teal-deep);
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    display:flex; justify-content:center;
+    padding:48px 16px;
+  }
+  .wrap{ width:100%; max-width:480px; }
+  .navlink{ margin-bottom:14px; }
+  .navlink a{ color:#9fd2cf; font-size:12.5px; text-decoration:none; }
+  .navlink a:hover{ text-decoration:underline; }
+  h1{ color:#eef7f6; font-size:20px; margin:0 0 4px; }
+  .sub{ color:#9fd2cf; font-size:13px; margin:0 0 24px; }
+  .card{ background:var(--paper); border-radius:4px; padding:24px; box-shadow:0 30px 60px rgba(0,0,0,0.35); }
+  label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--teal-deep); margin:16px 0 6px; }
+  label:first-child{ margin-top:0; }
+  input[type=password], input[type=text]{
+    width:100%; font-family:'IBM Plex Mono', monospace; font-size:15px;
+    padding:11px 12px; border:2px solid var(--ink); border-radius:4px; background:#fff; color:var(--ink);
+  }
+  input[type=file]{ width:100%; font-size:13px; padding:8px 0; }
+  button{
+    margin-top:20px; width:100%; background:var(--ink); color:var(--paper);
+    border:none; border-radius:4px; padding:13px; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  button:disabled{ opacity:0.5; cursor:default; }
+  .log{
+    margin-top:18px; font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+    background:#fff; border:1px solid var(--line); border-radius:4px; padding:12px;
+    max-height:220px; overflow:auto; white-space:pre-wrap; line-height:1.6;
+    display:none;
+  }
+  .log.show{ display:block; }
+  .log .ok{ color:var(--good); }
+  .log .err{ color:var(--bad); }
+  .gate{ text-align:center; }
+  .gate p{ font-size:13px; color:#5a5142; margin-bottom:16px; }
+  #app{ display:none; }
+  .section-title{ font-size:14px; font-weight:700; color:var(--teal-deep); margin-bottom:14px; }
+  .pay-badge{ display:inline-block; padding:4px 10px; border-radius:3px; font-weight:700; font-size:12.5px; }
+  .pay-badge.paid{ background:var(--good); color:#fff; }
+  .pay-badge.unpaid{ background:var(--bad); color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="navlink"><a href="index.html">← Нүүр хуудас (Тоолуур харах)</a></div>
+  <h1>Мөнхбадрах — Admin</h1>
+  <div class="sub">Сар бүрийн Excel файлыг оруулж, тоот бүрийн төлбөрийг шинэчилнэ</div>
+
+  <div class="card">
+    <div id="gate" class="gate">
+      <p>Admin нэвтрэх</p>
+      <input type="email" id="email" placeholder="Email" style="margin-bottom:8px;" />
+      <input type="password" id="passcode" placeholder="Нууц үг" />
+      <button id="unlockBtn" style="margin-top:14px;">Нэвтрэх</button>
+    </div>
+
+    <div id="app">
+      <div style="font-size:12.5px; color:#5a5142; margin-bottom:10px;">
+        Тоолуурын задаргаатай файл (жишээ: <em>Zadargaa 8 sAR.xlsx</em>) ба нэгтгэл файл
+        (жишээ: <em>УС ДУЛААНЫ ТӨЛБӨР 2026.xlsx</em>) хоёуланг нь энд оруулж болно —
+        файлын төрлийг өөрөө таньж, тохирох sheet-ийг нь олно.
+      </div>
+
+      <label for="sar">Он, сар</label>
+      <input type="text" id="sar" placeholder="Жишээ: 2026-08 (нэгтгэлд зөвхөн 2026 гэж бас болно)" />
+
+      <label for="file">Excel файл (.xlsx)</label>
+      <input type="file" id="file" accept=".xlsx,.xls" />
+
+      <button id="uploadBtn">Оруулах</button>
+
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+  <div class="card" id="payCard" style="display:none; margin-top:18px;">
+    <div class="section-title">Төлбөрийн байдал тэмдэглэх</div>
+
+    <label for="paySar">Он, сар</label>
+    <input type="text" id="paySar" placeholder="Жишээ: 2026-07" />
+
+    <label for="payToot">Тоот эсвэл утасны дугаар</label>
+    <input type="text" id="payToot" placeholder="Жишээ: 50602 эсвэл 99393474" />
+
+    <button id="payFindBtn" style="background:var(--teal, #0f6b73);">Хайх</button>
+
+    <div id="payResult" style="display:none; margin-top:16px; padding:14px; background:#fff; border:1px solid var(--line); border-radius:4px;">
+      <div id="payInfo" style="font-family:'IBM Plex Mono', monospace; font-size:13px; margin-bottom:12px;"></div>
+      <button id="payToggleBtn" style="margin-top:0;">—</button>
+    </div>
+
+    <div id="payLog" class="log"></div>
+  </div>
+
+  <div class="card" id="summaryCard" style="display:none; margin-top:18px;">
+    <div class="section-title">Нэгтгэл (мөнгөн дүнгийн товч) импортлох</div>
+    <div style="font-size:12.5px; color:#5a5142; margin-bottom:10px;">Тоолуурын задаргаагүй, зөвхөн Төлбөр/Төлөлт/Үлдэгдэлийн "нэгтгэл" маягийн файлд зориулагдсан.</div>
+
+    <label for="sumYear">Он</label>
+    <input type="text" id="sumYear" placeholder="Жишээ: 2026" value="2026" />
+
+    <label for="sumMonths">Аль саруудыг импортлох вэ (таслалаар)</label>
+    <input type="text" id="sumMonths" placeholder="Жишээ: 1,2,3,4,5" value="1,2,3,4,5" />
+
+    <label for="sumFile">Нэгтгэл Excel файл (.xlsx)</label>
+    <input type="file" id="sumFile" accept=".xlsx,.xls" />
+
+    <button id="sumUploadBtn">Импортлох</button>
+
+    <div id="sumLog" class="log"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+function showAdmin(){
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('payCard').style.display = 'block';
+  document.getElementById('summaryCard').style.display = 'block';
+}
+document.getElementById('unlockBtn').addEventListener('click', async () => {
+  const { error } = await supa.auth.signInWithPassword({
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('passcode').value
+  });
+  if (error){ alert('Нэвтрэх алдаа: ' + error.message); return; }
+  showAdmin();
+});
+supa.auth.getSession().then(({ data }) => { if (data.session) showAdmin(); });
+
+// ── Excel уншилтын нийтлэг хэрэгслүүд ─────────────────────────────────────
+// Ирж буй файлууд ижил бүтэцтэй байдаггүй: sheet-ийн нэр ("Sheet1", "нэгтгэл",
+// "8" гэх мэт), толгойн мөрийн байрлал (1, 3, 4, 5-р мөр), баганын дараалал,
+// нүд нийлүүлсэн (merged) толгой, нэмэлт хоосон зай — бүгд өөр байж болно.
+// Тиймээс дараах зарчмаар уншина:
+//   1) Аль нэг sheet-ийг нэрээр нь СОНГОХГҮЙ — бүх sheet-ийг шалгаад
+//      өгөгдлийн бүтцэд нь тохирохыг нь өөрөө олно.
+//   2) Баганыг тогтмол дугаараар биш, толгойн ТЕКСТЭЭР нь олно.
+//   3) Толгойн текстийг цэвэрлэж (давхар зай, NBSP, урд/хойд зай) харьцуулна.
+
+const HEADER_SCAN_ROWS = 12;   // толгойн мөрийг эхний хэдэн мөрөөс хайх вэ
+
+function num(v){
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+
+// Толгойн текстийг жиших хэлбэрт оруулна: NBSP → энгийн зай, давхар зай → нэг зай.
+function norm(v){
+  if (v === undefined || v === null) return '';
+  return String(v).replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Зарим нүдэнд утасны дугаар "9940-4171" (дундуур зураастай) эсвэл
+// "99404171 99402471" (хоёр дугаар зэрэг, хоосон зайгаар тусгаарлагдсан)
+// байдаг тул цэвэрлэж, эхний хүчинтэй 8 оронтой дугаарыг гаргаж авна.
+function cleanPhone(raw){
+  if (raw === null || raw === undefined || raw === '') return null;
+  let s = String(raw).replace(/[-.]/g, '');
+  const tokens = s.trim().split(/\s+/).filter(Boolean);
+  for (const t of tokens){
+    if (/^\d{8}$/.test(t)) return t;
+  }
+  const m = s.match(/\d{8}/);
+  return m ? m[0] : (tokens[0] || null);
+}
+
+function sheetRows(ws){
+  return XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+}
+
+// rows -- header:1 хэлбэрээр уншсан 2D массив. Толгойн хэсгээс predicate-д
+// тохирох эхний баганын индексийг олно.
+function findCol(rows, predicate, maxRow){
+  const limit = Math.min(maxRow ?? HEADER_SCAN_ROWS, rows.length);
+  for (let r = 0; r < limit; r++){
+    const row = rows[r];
+    if (!row) continue;
+    for (let c = 0; c < row.length; c++){
+      const t = norm(row[c]);
+      if (t && predicate(t)) return c;
+    }
+  }
+  return -1;
+}
+
+// Тоот мөр мөн эсэх: тоот нь 3-8 оронтой бүхэл тоо байх ёстой. Ингэснээр
+// нийлбэр мөр, "№" багана, давхарын дугаар зэрэгт хууртахгүй.
+function isTootValue(v){
+  if (v === null || v === undefined || v === '') return false;
+  return /^\d{3,8}$/.test(String(v).trim());
+}
+
+function countTootRows(rows, tootCol){
+  let n = 0;
+  for (const row of rows){ if (row && isTootValue(row[tootCol])) n++; }
+  return n;
+}
+
+// ── 1. Тоолуурын задаргаатай sheet (жишээ: "Zadargaa 8 sAR.xlsx" → Sheet1) ──
+const DETAIL_REQUIRED = ['toot','suuri','cold','hot','sewage','waterTot',
+                         'heatBase','heatM2','heatHot','heatTot','grandTot'];
+
+function analyzeDetail(rows){
+  const col = {
+    toot:      findCol(rows, t => t === 'Тоот'),
+    utas:      findCol(rows, t => t === 'Утас' || t.includes('Утасны дугаар')),
+    ovog:      findCol(rows, t => t === 'Овог'),
+    ner:       findCol(rows, t => t === 'Нэр'),
+    // "Талбай"-д айлын НИЙТ м.кв-ыг харуулна. Файлд "Нийт хэмжээ /м.кв/" ба
+    // "Дулаан тооцох М.кв" (тагтгүй) хоёул байдаг тул эхнийхийг нь эрхэмлэнэ.
+    area:      (() => {
+      const a = findCol(rows, t => t.replace(/\s/g, '').startsWith('Нийтхэмжээ'));
+      return a !== -1 ? a : findCol(rows, t => t.includes('Дулаан тооцох'));
+    })(),
+    suuri:     findCol(rows, t => t === 'Суурь хураамж'),
+    cold:      findCol(rows, t => t === 'Хүйтэн' || t === 'Хүйтэн ус'),
+    hot:       findCol(rows, t => t === 'Халуун' || t === 'Халуун ус'),
+    sewage:    findCol(rows, t => t.includes('Бохир ус')),
+    waterTot:  findCol(rows, t => t.includes('Нийт усны төлбөр')),
+    heatBase:  findCol(rows, t => t === 'Суурь үнэ'),
+    heatM2:    findCol(rows, t => t.toUpperCase().includes('ДУЛААНЫ ТӨЛБӨР')),
+    heatHot:   findCol(rows, t => t.toUpperCase().includes('ХАЛУУН УСНЫ ТООЛУУР')),
+    heatTot:   findCol(rows, t => t === 'Нийт дүн'),
+    grandTot:  findCol(rows, t => t.startsWith('Нийт төлбөр')),
+  };
+  const missing = DETAIL_REQUIRED.filter(k => col[k] === -1);
+  if (missing.length) return { ok:false, missing, score: DETAIL_REQUIRED.length - missing.length };
+  if (countTootRows(rows, col.toot) < 3) return { ok:false, missing:['дата мөр'], score:0 };
+  return { ok:true, col };
+}
+
+// ── 2. Нэгтгэл sheet (жишээ: "УС ДУЛААНЫ ТӨЛБӨР 2026.xlsx" → нэгтгэл) ──────
+// Сар бүр 3 баганын блок эзэлнэ: Төлбөр | Төлөлт | Үлдэгдэл.
+// Толгойд "1-р сар", "6 сар", "08 сар" гэх мэт янз бүрээр бичигдсэн байдаг.
+// "12 сарын үлдэгдэл" бол сарын блок БИШ (эхний үлдэгдэл) тул regex-ийн
+// төгсгөлд $ тавьж, дэд толгойг нь ("Төлбөр") шалгаж ялгана.
+function isMonthBlock(rows, r, c){
+  for (let k = r + 1; k <= r + 2 && k < rows.length; k++){
+    const t = norm((rows[k] || [])[c]);
+    if (!t) continue;
+    return t.startsWith('Төлбөр');
+  }
+  return true; // дэд толгойгүй бол сарын блок гэж үзнэ
+}
+
+function monthColumns(rows){
+  const limit = Math.min(HEADER_SCAN_ROWS, rows.length);
+  const map = {};
+  for (let r = 0; r < limit; r++){
+    const row = rows[r];
+    if (!row) continue;
+    for (let c = 0; c < row.length; c++){
+      const t = norm(row[c]);
+      if (!t) continue;
+      const m = t.match(/^(\d{1,2})\s*-?\s*р?\.?\s*сар(ын)?$/);
+      if (!m) continue;
+      const n = parseInt(m[1], 10);
+      if (n < 1 || n > 12 || (n in map)) continue;
+      if (!isMonthBlock(rows, r, c)) continue;
+      map[n] = c;
+    }
+  }
+  return map;
+}
+
+function analyzeSummary(rows){
+  const toot = findCol(rows, t => t === 'Тоот');
+  if (toot === -1) return { ok:false, missing:['Тоот'], score:0 };
+  const monthCols = monthColumns(rows);
+  if (!Object.keys(monthCols).length) return { ok:false, missing:['сарын толгой'], score:1 };
+  if (countTootRows(rows, toot) < 3) return { ok:false, missing:['дата мөр'], score:1 };
+  return {
+    ok: true,
+    col: {
+      toot,
+      ovog: findCol(rows, t => t === 'Овог'),
+      ner:  findCol(rows, t => t === 'Нэр'),
+      utas: findCol(rows, t => t === 'Утас' || t.includes('Утасны дугаар')),
+      monthCols,
+    }
+  };
+}
+
+// Бүх sheet-ийг эргэж, analyze-д тохирсон эхнийхийг буцаана. Тохирохгүй бол
+// хамгийн ойр байсан sheet-ийн дутуу баганыг алдааны мэдээлэлд үлдээнэ.
+function pickSheet(wb, analyze){
+  let best = null;
+  for (const name of wb.SheetNames){
+    const ws = wb.Sheets[name];
+    if (!ws) continue;
+    const rows = sheetRows(ws);
+    if (!rows.length) continue;
+    const res = analyze(rows);
+    if (res && res.ok) return { name, rows, col: res.col };
+    if (res && (!best || res.score > best.score)) best = { name, score: res.score, missing: res.missing };
+  }
+  return { miss: best };
+}
+
+// ── Мөр бэлдэх ────────────────────────────────────────────────────────────
+// Файлд байхгүй баганыг payload-д ОГТ оруулахгүй — ингэснээр upsert хийхэд
+// өмнө нь өөр файлаас орсон утгыг null-аар дарж бичихгүй.
+function put(obj, key, value){ if (value !== undefined && value !== null) obj[key] = value; }
+
+function buildDetailRows(rows, col, sar){
+  const out = [];
+  for (const row of rows){
+    if (!row || !isTootValue(row[col.toot])) continue;
+    const r = {
+      sar,
+      toot: String(row[col.toot]).trim(),
+      suuri_huraamj: num(row[col.suuri]),
+      hooiten_umnoh: num(row[col.cold]),
+      hooiten_odoo:  num(row[col.cold + 1]),
+      hooiten_zuruu: num(row[col.cold + 2]),
+      haluun_umnoh:  num(row[col.hot]),
+      haluun_odoo:   num(row[col.hot + 1]),
+      haluun_zuruu:  num(row[col.hot + 2]),
+      bohir_us:       num(row[col.sewage]),
+      niit_us_tolbor: num(row[col.waterTot]),
+      dulaan_suuri:     num(row[col.heatBase]),
+      dulaan_tolbor_m2: num(row[col.heatM2]),
+      haluun_us_tooluur_heat: num(row[col.heatHot]),
+      dulaan_niit: num(row[col.heatTot]),
+    };
+    // "Нийт төлбөр"-ийг нэгтгэл файл ч бичдэг тул хоосон нүд байвал огт
+    // илгээхгүй — өмнө нь орсон зөв дүнг null-аар дарж бичихээс сэргийлнэ.
+    put(r, 'niit_tolbor', num(row[col.grandTot]));
+    if (col.utas !== -1) put(r, 'utas', cleanPhone(row[col.utas]));
+    if (col.area !== -1) put(r, 'niit_hemjee', num(row[col.area]));
+    if (col.ovog !== -1 && row[col.ovog]) put(r, 'ovog', String(row[col.ovog]).trim());
+    if (col.ner  !== -1 && row[col.ner])  put(r, 'ner',  String(row[col.ner]).trim());
+    out.push(r);
+  }
+  return out;
+}
+
+function buildSummaryRows(rows, col, year, months){
+  const out = [];
+  for (const row of rows){
+    if (!row || !isTootValue(row[col.toot])) continue;
+    const toot = String(row[col.toot]).trim();
+    const utas = (col.utas !== -1) ? cleanPhone(row[col.utas]) : null;
+    const ovog = (col.ovog !== -1 && row[col.ovog]) ? String(row[col.ovog]).trim() : null;
+    const ner  = (col.ner  !== -1 && row[col.ner])  ? String(row[col.ner]).trim()  : null;
+
+    for (const m of months){
+      const c = col.monthCols[m];
+      const tolbor = num(row[c]);
+      const tolson = num(row[c + 1]);
+      const uldeg  = num(row[c + 2]);
+      // Тухайн сард төлбөр ч, төлөлт ч бичигдээгүй бол алгасна. (Үлдэгдлийн
+      // багана нь өмнөх сараас шилжиж ирсэн дүнг үргэлж агуулдаг тул түүнийг
+      // "дата байна" гэж үзэж болохгүй.) Эс тэгвээс хоосон сарын багана
+      // задаргаанаас орсон бодит дүнг null-аар дарж бичих эрсдэлтэй.
+      if (tolbor === null && tolson === null) continue;
+      const r = {
+        sar: year + '-' + String(m).padStart(2, '0'),
+        toot,
+        niit_tolbor: tolbor,
+        tolson_dun: tolson,
+        uldegdel: uldeg,
+      };
+      put(r, 'utas', utas);
+      put(r, 'ovog', ovog);
+      put(r, 'ner', ner);
+      out.push(r);
+    }
+  }
+  return out;
+}
+
+// ── Supabase руу бичих ────────────────────────────────────────────────────
+// Нэг хүсэлт дотор бүх мөр ЯГ ижил түлхүүртэй байх шаардлагатай (PostgREST
+// "All object keys must match" гэж алдаа өгдөг). Мөн түлхүүр дутуу мөрийг
+// нөгөө мөрийн баганад null-аар нөхөж бичих эрсдэлтэй. Тиймээс мөрүүдийг
+// түлхүүрийн бүрдлээр нь бүлэглээд, бүлэг тус бүрийг тусад нь илгээнэ —
+// ингэснээр "байхгүй багана огт явахгүй" гэсэн зарчим хадгалагдана.
+function groupByKeys(payload){
+  const groups = new Map();
+  for (const r of payload){
+    const sig = Object.keys(r).sort().join('|');
+    if (!groups.has(sig)) groups.set(sig, []);
+    groups.get(sig).push(r);
+  }
+  return [...groups.values()];
+}
+
+async function upsertRows(payload, logFn){
+  const chunkSize = 100;
+  let done = 0;
+  for (const group of groupByKeys(payload)){
+    for (let i = 0; i < group.length; i += chunkSize){
+      const chunk = group.slice(i, i + chunkSize);
+      const { error } = await supa.from('water_bills').upsert(chunk, { onConflict: 'sar,toot' });
+      if (error) throw new Error(error.message);
+      done += chunk.length;
+      logFn(done + ' / ' + payload.length + ' бичигдлээ…');
+    }
+  }
+}
+
+const logEl = document.getElementById('log');
+function log(msg, cls){
+  logEl.classList.add('show');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// "2026-08", "2026.08", "2026 8" эсвэл зөвхөн "2026" бүгдийг зөвшөөрнө.
+function parseSarInput(raw){
+  const s = norm(raw).replace(/[./ ]/g, '-');
+  let m = s.match(/^(\d{4})-(\d{1,2})$/);
+  if (m) return { year: m[1], month: parseInt(m[2], 10) };
+  m = s.match(/^(\d{4})$/);
+  if (m) return { year: m[1], month: null };
+  return null;
+}
+
+// ── Гол upload товч: файлын төрлийг өөрөө таньж, зохих импортыг ажиллуулна ──
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+  const sarRaw = document.getElementById('sar').value.trim();
+  const fileInput = document.getElementById('file');
+  const btn = document.getElementById('uploadBtn');
+  logEl.innerHTML = '';
+
+  const parsed = parseSarInput(sarRaw);
+  if (!parsed){ log('Он, сараа оруулна уу (жишээ: 2026-08, эсвэл зөвхөн 2026)', 'err'); return; }
+  if (!fileInput.files.length){ log('Excel файл сонгоно уу.', 'err'); return; }
+
+  btn.disabled = true;
+  log('Файл уншиж байна…');
+
+  try {
+    const ab = await fileInput.files[0].arrayBuffer();
+    const wb = XLSX.read(ab, { type:'array' });
+    log('Sheet-үүд: ' + wb.SheetNames.join(', '));
+
+    // 1) Тоолуурын задаргаатай sheet байна уу?
+    const detail = pickSheet(wb, analyzeDetail);
+    if (detail.rows){
+      if (parsed.month === null){
+        log('Задаргааны файлд он, САР хоёуланг нь бичнэ үү (жишээ: 2026-08).', 'err');
+        btn.disabled = false; return;
+      }
+      const sar = parsed.year + '-' + String(parsed.month).padStart(2, '0');
+      log('Задаргааны файл гэж таньлаа — sheet: "' + detail.name + '"');
+      const payload = buildDetailRows(detail.rows, detail.col, sar);
+      log(payload.length + ' тоот олдлоо.');
+      if (!payload.length) throw new Error('Дата мөр олдсонгүй.');
+      await upsertRows(payload, log);
+      log(sar + ' сарын задаргаа амжилттай орлоо ✓', 'ok');
+      btn.disabled = false; return;
+    }
+
+    // 2) Эсвэл нэгтгэл (Төлбөр/Төлөлт/Үлдэгдэл) sheet байна уу?
+    const summary = pickSheet(wb, analyzeSummary);
+    if (summary.rows){
+      const found = Object.keys(summary.col.monthCols).map(Number).sort((a, b) => a - b);
+      const months = (parsed.month === null) ? found : found.filter(m => m === parsed.month);
+      log('Нэгтгэл файл гэж таньлаа — sheet: "' + summary.name + '"');
+      log('Файлд байгаа сарууд: ' + found.join(', '));
+      if (!months.length) throw new Error(parsed.month + '-р сарын багана файлаас олдсонгүй.');
+
+      const payload = buildSummaryRows(summary.rows, summary.col, parsed.year, months);
+      log(payload.length + ' мөр бэлдлээ.');
+      if (!payload.length) throw new Error('Сонгосон сар(ууд)-т дүн бөглөгдөөгүй байна.');
+      await upsertRows(payload, log);
+      log('Дата амжилттай орлоо ✓', 'ok');
+      btn.disabled = false; return;
+    }
+
+    // 3) Аль нь ч биш
+    const near = detail.miss || summary.miss;
+    throw new Error(
+      'Файлын бүтцийг таньсангүй.' +
+      (near ? ' ("' + near.name + '" sheet-ээс дутуу: ' + near.missing.join(', ') + ')' : '') +
+      ' Задаргааны файлд "Тоот, Суурь хураамж, Хүйтэн, Халуун, Бохир ус, Нийт усны төлбөр, ' +
+      'Суурь үнэ, ДУЛААНЫ ТӨЛБӨР m2, ХАЛУУН УСНЫ ТООЛУУР, Нийт дүн, Нийт төлбөр" толгой, ' +
+      'нэгтгэл файлд "Тоот" болон "1-р сар / 6 сар" мэтийн сарын толгой байх ёстой.'
+    );
+  } catch (e){
+    log('Алдаа гарлаа: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+});
+
+// --- Төлбөрийн байдал тэмдэглэх ---
+const payLogEl = document.getElementById('payLog');
+function payLog(msg, cls){
+  payLogEl.classList.add('show');
+  payLogEl.innerHTML = '';
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  payLogEl.appendChild(line);
+}
+
+let currentPayRow = null;
+
+document.getElementById('payFindBtn').addEventListener('click', async () => {
+  const sar = document.getElementById('paySar').value.trim();
+  const key = document.getElementById('payToot').value.trim();
+  document.getElementById('payResult').style.display = 'none';
+  currentPayRow = null;
+
+  if (!sar || !key){ payLog('Он сар болон тоот/утасаа бичнэ үү.', 'err'); return; }
+
+  payLog('Хайж байна…');
+  if (!/^\d{3,8}$/.test(key)){ payLog('Тоот/утас зөвхөн тооноос бүрдэх ёстой.', 'err'); return; }
+  const { data, error } = await supa
+    .from('water_bills')
+    .select('sar,toot,utas,ovog,ner,niit_tolbor,paid,paid_at')
+    .eq('sar', sar)
+    .or(`toot.eq.${key},utas.eq.${key}`)
+    .order('toot', { ascending: true })
+    .limit(1);
+
+  if (error){ payLog('Алдаа: ' + error.message, 'err'); return; }
+  if (!data || !data.length){ payLog('Бүртгэл олдсонгүй.', 'err'); return; }
+
+  currentPayRow = data[0];
+  const row = data[0];
+  payLogEl.classList.remove('show');
+  const name = [row.ovog, row.ner].filter(Boolean).join(' ');
+  const badge = row.paid
+    ? '<span class="pay-badge paid">Төлсөн</span>'
+    : '<span class="pay-badge unpaid">Төлөөгүй</span>';
+  document.getElementById('payInfo').innerHTML =
+    'Тоот ' + row.toot + ' — ' + name + '<br>' +
+    'Утас: ' + (row.utas || '—') + '<br>' +
+    'Нийт төлбөр: ' + (row.niit_tolbor ?? '—') + ' ₮<br>' +
+    'Төлөв: ' + badge +
+    (row.paid_at ? '<br>Огноо: ' + new Date(row.paid_at).toLocaleString('mn-MN') : '');
+
+  const toggleBtn = document.getElementById('payToggleBtn');
+  toggleBtn.textContent = row.paid ? 'Төлөөгүй болгох' : 'Төлсөн гэж тэмдэглэх';
+  document.getElementById('payResult').style.display = 'block';
+});
+
+document.getElementById('payToggleBtn').addEventListener('click', async () => {
+  if (!currentPayRow) return;
+  const newPaid = !currentPayRow.paid;
+  const { error } = await supa
+    .from('water_bills')
+    .update({ paid: newPaid, paid_at: newPaid ? new Date().toISOString() : null })
+    .eq('sar', currentPayRow.sar)
+    .eq('toot', currentPayRow.toot);
+
+  if (error){ payLog('Алдаа: ' + error.message, 'err'); return; }
+  currentPayRow.paid = newPaid;
+  currentPayRow.paid_at = newPaid ? new Date().toISOString() : null;
+  document.getElementById('payFindBtn').click();
+});
+
+
+// --- Нэгтгэл (мөнгөн дүн) импорт ---
+// Дээрх гол товч файлыг өөрөө таньдаг болсон тул энэ карт нь зөвхөн "аль
+// саруудыг импортлохоо" гараар заах хэрэгтэй үед хэрэглэгдэнэ.
+const sumLogEl = document.getElementById('sumLog');
+function sumLog(msg, cls){
+  sumLogEl.classList.add('show');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  sumLogEl.appendChild(line);
+  sumLogEl.scrollTop = sumLogEl.scrollHeight;
+}
+
+document.getElementById('sumUploadBtn').addEventListener('click', async () => {
+  const year = document.getElementById('sumYear').value.trim();
+  const monthsWanted = document.getElementById('sumMonths').value.trim()
+    .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+  const fileInput = document.getElementById('sumFile');
+  const btn = document.getElementById('sumUploadBtn');
+  sumLogEl.innerHTML = '';
+
+  if (!/^\d{4}$/.test(year)){ sumLog('Оноо 4 оронтой бичнэ үү (жишээ: 2026).', 'err'); return; }
+  if (!monthsWanted.length){ sumLog('Импортлох саруудаа бичнэ үү (жишээ: 1,2,3).', 'err'); return; }
+  if (!fileInput.files.length){ sumLog('Excel файл сонгоно уу.', 'err'); return; }
+
+  btn.disabled = true;
+  sumLog('Файл уншиж байна…');
+
+  try {
+    const ab = await fileInput.files[0].arrayBuffer();
+    const wb = XLSX.read(ab, { type:'array' });
+
+    // Sheet-ийг нэрээр нь биш, бүтцээр нь олно ("нэгтгэл", "Sheet1" ямар ч нэртэй байж болно).
+    const summary = pickSheet(wb, analyzeSummary);
+    if (!summary.rows){
+      throw new Error('Сарын багана бүхий нэгтгэл sheet олдсонгүй.' +
+        (summary.miss ? ' ("' + summary.miss.name + '" sheet-ээс дутуу: ' + summary.miss.missing.join(', ') + ')' : ''));
+    }
+
+    const found = Object.keys(summary.col.monthCols).map(Number).sort((a, b) => a - b);
+    sumLog('Sheet: "' + summary.name + '" — файлд байгаа сарууд: ' + found.join(', '));
+
+    const monthsFound = monthsWanted.filter(m => found.includes(m));
+    if (!monthsFound.length) throw new Error('Хүссэн саруудын толгой (жишээ нь "1-р сар") файлаас олдсонгүй.');
+    sumLog('Импортлох сарууд: ' + monthsFound.join(', '));
+
+    const payload = buildSummaryRows(summary.rows, summary.col, year, monthsFound);
+    if (!payload.length) throw new Error('Сонгосон саруудад дүн бөглөгдөөгүй байна.');
+    sumLog(payload.length + ' мөр бэлдлээ, бичиж байна…');
+
+    await upsertRows(payload, sumLog);
+    sumLog('Амжилттай орлоо ✓', 'ok');
+  } catch (e){
+    sumLog('Алдаа гарлаа: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

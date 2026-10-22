@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+
+# Supabase CLI link and local project metadata
+supabase/.temp/
+
+# Editor and operating system files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Local backup copies
+*.bak
+
+# Postman collections may contain merchant credentials and bearer tokens
+QPay API v2.postman_collection*.json
