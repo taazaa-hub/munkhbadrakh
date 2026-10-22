@@ -3,133 +3,303 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin — Мөнхбадрах ОСК</title>
+<title>Админ — Мөнхбадрах ОСК</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ── Design tokens (index.html-тэй ижил) ───────────────────────────── */
   :root{
-    --ink:#0e2226;
-    --paper:#f4f1e8;
-    --teal:#0f6b73;
-    --teal-deep:#0a4a50;
-    --line: rgba(14,34,38,0.14);
-    --good:#2f7d5a;
-    --bad:#9b3b2c;
+    color-scheme: light dark;
+
+    --bg:          #eef1f2;
+    --surface:     #ffffff;
+    --surface-2:   #f5f7f7;
+    --border:      #d8dee0;
+    --border-strong:#9aa8ad;
+    --text:        #13232a;
+    --text-2:      #45555c;
+    --text-3:      #5f6f75;
+    --primary:     #0b5d66;
+    --primary-hover:#084a51;
+    --on-primary:  #ffffff;
+    --success:     #1e6b47;
+    --danger:      #a13628;
+    --focus:       #0b5d66;
+
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 24px; --space-6: 32px; --space-7: 48px;
+    --fs-xs: 12px; --fs-sm: 14px; --fs-md: 16px; --fs-lg: 20px; --fs-xl: 25px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --shadow: 0 1px 2px rgba(19,35,42,0.06), 0 4px 16px rgba(19,35,42,0.06);
+    --pad: var(--space-5);
+    --target: 44px;
+
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
   }
-  *{box-sizing:border-box;}
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:          #0e1416;
+      --surface:     #161f22;
+      --surface-2:   #1b2629;
+      --border:      #2b393d;
+      --border-strong:#4d5f65;
+      --text:        #e5ecee;
+      --text-2:      #b2c0c4;
+      --text-3:      #98a8ad;
+      --primary:     #5fb6bf;
+      --primary-hover:#7cc6ce;
+      --on-primary:  #0a1c1f;
+      --success:     #5cc092;
+      --danger:      #ef8a7a;
+      --focus:       #7cc6ce;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+  }
+
+  *, *::before, *::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   body{
-    margin:0; min-height:100vh;
-    background:var(--teal-deep);
-    font-family:'IBM Plex Sans', sans-serif;
-    color:var(--ink);
-    display:flex; justify-content:center;
-    padding:48px 16px;
+    margin:0;
+    min-height:100vh;
+    padding:var(--space-7) var(--space-4);
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-sans);
+    font-size:var(--fs-md);
+    line-height:1.5;
   }
-  .wrap{ width:100%; max-width:480px; }
-  .navlink{ margin-bottom:14px; }
-  .navlink a{ color:#9fd2cf; font-size:12.5px; text-decoration:none; }
-  .navlink a:hover{ text-decoration:underline; }
-  h1{ color:#eef7f6; font-size:20px; margin:0 0 4px; }
-  .sub{ color:#9fd2cf; font-size:13px; margin:0 0 24px; }
-  .card{ background:var(--paper); border-radius:4px; padding:24px; box-shadow:0 30px 60px rgba(0,0,0,0.35); }
-  label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--teal-deep); margin:16px 0 6px; }
-  label:first-child{ margin-top:0; }
-  input[type=password], input[type=text]{
-    width:100%; font-family:'IBM Plex Mono', monospace; font-size:15px;
-    padding:11px 12px; border:2px solid var(--ink); border-radius:4px; background:#fff; color:var(--ink);
+  .wrap{ width:100%; max-width:560px; margin:0 auto; }
+
+  :focus{ outline:none; }
+  :focus-visible{ outline:3px solid var(--focus); outline-offset:2px; border-radius:var(--radius-sm); }
+
+  /* ── Header ─────────────────────────────────────────────────────────── */
+  .navlink{ margin-bottom:var(--space-4); }
+  .navlink a{ color:var(--text-2); font-size:var(--fs-sm); text-underline-offset:3px; }
+  .navlink a:hover{ color:var(--text); }
+  h1{ font-size:var(--fs-xl); line-height:1.2; font-weight:600; margin:0 0 var(--space-1); }
+  .sub{ color:var(--text-2); font-size:var(--fs-sm); margin:0 0 var(--space-5); }
+
+  /* ── Cards ──────────────────────────────────────────────────────────── */
+  .grid{ display:grid; gap:var(--space-4); }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
+    box-shadow:var(--shadow);
+    padding:var(--pad);
   }
-  input[type=file]{ width:100%; font-size:13px; padding:8px 0; }
+  .section-title{ font-size:var(--fs-lg); font-weight:600; line-height:1.25; margin:0 0 var(--space-2); }
+  .help{ font-size:var(--fs-sm); color:var(--text-2); margin:0 0 var(--space-4); }
+
+  /* ── Form ───────────────────────────────────────────────────────────── */
+  label{ display:block; font-size:var(--fs-sm); font-weight:600; margin:var(--space-4) 0 var(--space-2); }
+  label:first-of-type{ margin-top:0; }
+  input[type=email], input[type=password], input[type=text]{
+    width:100%;
+    min-height:var(--target);
+    padding:0 var(--space-3);
+    font-family:var(--font-mono);
+    font-size:var(--fs-md);            /* 16px — iOS-д focus хийхэд томрохгүй */
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--border-strong);
+    border-radius:var(--radius-sm);
+    transition:border-color 0.15s ease-out;
+  }
+  input::placeholder{ font-family:var(--font-sans); color:var(--text-3); }
+  input:hover{ border-color:var(--text-2); }
+  input:focus-visible{ outline-offset:0; border-color:var(--focus); }
+  input[type=file]{
+    width:100%;
+    font-size:var(--fs-sm);
+    color:var(--text-2);
+    padding:var(--space-2);
+    background:var(--surface-2);
+    border:1px dashed var(--border-strong);
+    border-radius:var(--radius-sm);
+  }
+  input[type=file]::file-selector-button{
+    min-height:36px;
+    margin-right:var(--space-3);
+    padding:0 var(--space-4);
+    font:600 var(--fs-sm) var(--font-sans);
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--border-strong);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+
   button{
-    margin-top:20px; width:100%; background:var(--ink); color:var(--paper);
-    border:none; border-radius:4px; padding:13px; font-size:15px; font-weight:600; cursor:pointer;
+    display:block;
+    width:100%;
+    min-height:var(--target);
+    margin-top:var(--space-5);
+    padding:var(--space-3) var(--space-4);
+    font:600 var(--fs-md) var(--font-sans);
+    color:var(--on-primary);
+    background:var(--primary);
+    border:1px solid transparent;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:background-color 0.15s ease-out, border-color 0.15s ease-out;
   }
-  button:disabled{ opacity:0.5; cursor:default; }
+  button:hover{ background:var(--primary-hover); }
+  button:disabled{ opacity:0.55; cursor:not-allowed; }
+  button.secondary{ color:var(--text); background:var(--surface); border-color:var(--border-strong); }
+  button.secondary:hover{ background:var(--surface-2); border-color:var(--text-2); }
+
+  /* ── Log ────────────────────────────────────────────────────────────── */
   .log{
-    margin-top:18px; font-family:'IBM Plex Mono', monospace; font-size:12.5px;
-    background:#fff; border:1px solid var(--line); border-radius:4px; padding:12px;
-    max-height:220px; overflow:auto; white-space:pre-wrap; line-height:1.6;
     display:none;
+    margin-top:var(--space-4);
+    padding:var(--space-3);
+    max-height:240px;
+    overflow:auto;
+    font-family:var(--font-mono);
+    font-size:13px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
   }
   .log.show{ display:block; }
-  .log .ok{ color:var(--good); }
-  .log .err{ color:var(--bad); }
-  .gate{ text-align:center; }
-  .gate p{ font-size:13px; color:#5a5142; margin-bottom:16px; }
+  .log .ok{ color:var(--success); font-weight:600; }
+  .log .err{ color:var(--danger); font-weight:600; }
+
+  /* ── Login ──────────────────────────────────────────────────────────── */
+  .gate{ max-width:400px; margin:0 auto; }
   #app{ display:none; }
-  .section-title{ font-size:14px; font-weight:700; color:var(--teal-deep); margin-bottom:14px; }
-  .pay-badge{ display:inline-block; padding:4px 10px; border-radius:3px; font-weight:700; font-size:12.5px; }
-  .pay-badge.paid{ background:var(--good); color:#fff; }
-  .pay-badge.unpaid{ background:var(--bad); color:#fff; }
+
+  /* ── Payment status ─────────────────────────────────────────────────── */
+  .pay-result{
+    display:none;
+    margin-top:var(--space-4);
+    padding:var(--space-4);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+  }
+  .pay-info{ font-family:var(--font-mono); font-size:var(--fs-sm); line-height:1.7; }
+  .pay-result button{ margin-top:var(--space-4); }
+  .pay-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:var(--space-2);
+    padding:0 var(--space-3);
+    border:1px solid currentColor;
+    border-radius:999px;
+    font:600 var(--fs-xs)/1.8 var(--font-sans);
+  }
+  .pay-badge::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .pay-badge.paid{ color:var(--success); }
+  .pay-badge.unpaid{ color:var(--danger); }
+
+  /* ── Responsive ─────────────────────────────────────────────────────── */
+  @media (max-width: 480px){
+    :root{ --pad: var(--space-4); }
+    body{ padding:var(--space-5) var(--space-3) var(--space-6); }
+    h1{ font-size:var(--fs-lg); }
+  }
+  /* Том дэлгэц: гол үйлдэл (Excel оруулах) зүүн баганад, бусад нь баруун талд. */
+  @media (min-width: 1024px){
+    .wrap{ max-width:1040px; }
+    .grid{ grid-template-columns:1fr 1fr; gap:var(--space-5); align-items:start; }
+    .grid > .card:first-child{ grid-row:span 2; }
+    :root{ --pad: var(--space-6); }
+  }
+  /* Нэвтрээгүй үед зөвхөн нэвтрэх карт харагдана — хуудсыг нарийсгаж голлуулна. */
+  @media (min-width: 1024px){
+    .wrap:has(#gate:not([style*="none"])){ max-width:480px; }
+    .wrap:has(#gate:not([style*="none"])) .grid{ grid-template-columns:1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ transition:none !important; animation:none !important; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="navlink"><a href="index.html">← Нүүр хуудас (Тоолуур харах)</a></div>
-  <h1>Мөнхбадрах — Admin</h1>
-  <div class="sub">Сар бүрийн Excel файлыг оруулж, тоот бүрийн төлбөрийг шинэчилнэ</div>
+  <div class="navlink"><a href="index.html">Нүүр хуудас руу буцах</a></div>
+  <h1>Мөнхбадрах ОСК — Админ</h1>
+  <p class="sub">Сар бүрийн Excel файлыг оруулж, тоот бүрийн төлбөрийг шинэчилнэ.</p>
 
-  <div class="card">
-    <div id="gate" class="gate">
-      <p>Admin нэвтрэх</p>
-      <input type="email" id="email" placeholder="Email" style="margin-bottom:8px;" />
-      <input type="password" id="passcode" placeholder="Нууц үг" />
-      <button id="unlockBtn" style="margin-top:14px;">Нэвтрэх</button>
-    </div>
+  <div class="grid">
+  <section class="card">
+    <form id="gate" class="gate" onsubmit="return false;">
+      <h2 class="section-title">Нэвтрэх</h2>
+      <p class="help">Админы бүртгэлтэй имэйл болон нууц үгээ оруулна уу.</p>
+      <label for="email">Имэйл</label>
+      <input type="email" id="email" autocomplete="username" />
+      <label for="passcode">Нууц үг</label>
+      <input type="password" id="passcode" autocomplete="current-password" />
+      <button id="unlockBtn" type="submit">Нэвтрэх</button>
+    </form>
 
     <div id="app">
-      <div style="font-size:12.5px; color:#5a5142; margin-bottom:10px;">
-        Тоолуурын задаргаатай файл (жишээ: <em>Zadargaa 8 sAR.xlsx</em>) ба нэгтгэл файл
-        (жишээ: <em>УС ДУЛААНЫ ТӨЛБӨР 2026.xlsx</em>) хоёуланг нь энд оруулж болно —
-        файлын төрлийг өөрөө таньж, тохирох sheet-ийг нь олно.
+      <div class="upload-body">
+        <h2 class="section-title">Excel файл оруулах</h2>
+        <p class="help">
+          Тоолуурын задаргаатай файл (жишээ: <em>Zadargaa 8 sAR.xlsx</em>) болон нэгтгэл файл
+          (жишээ: <em>УС ДУЛААНЫ ТӨЛБӨР 2026.xlsx</em>) хоёуланг энд оруулж болно.
+          Файлын төрөл болон тохирох sheet-ийг автоматаар тодорхойлно.
+        </p>
+
+        <label for="sar">Он, сар</label>
+        <input type="text" id="sar" inputmode="numeric" placeholder="Жишээ: 2026-08 (нэгтгэлд 2026)" />
+
+        <label for="file">Excel файл (.xlsx)</label>
+        <input type="file" id="file" accept=".xlsx,.xls" />
+
+        <button id="uploadBtn" type="button">Оруулах</button>
+
+        <div id="log" class="log" role="status" aria-live="polite"></div>
       </div>
-
-      <label for="sar">Он, сар</label>
-      <input type="text" id="sar" placeholder="Жишээ: 2026-08 (нэгтгэлд зөвхөн 2026 гэж бас болно)" />
-
-      <label for="file">Excel файл (.xlsx)</label>
-      <input type="file" id="file" accept=".xlsx,.xls" />
-
-      <button id="uploadBtn">Оруулах</button>
-
-      <div id="log" class="log"></div>
     </div>
-  </div>
+  </section>
 
-  <div class="card" id="payCard" style="display:none; margin-top:18px;">
-    <div class="section-title">Төлбөрийн байдал тэмдэглэх</div>
+  <section class="card" id="payCard" style="display:none;">
+    <h2 class="section-title">Төлбөрийн байдал тэмдэглэх</h2>
+    <p class="help">Банкаар шилжүүлсэн төлбөрийг гараар «Төлсөн» болгоно.</p>
 
     <label for="paySar">Он, сар</label>
-    <input type="text" id="paySar" placeholder="Жишээ: 2026-07" />
+    <input type="text" id="paySar" inputmode="numeric" placeholder="Жишээ: 2026-07" />
 
     <label for="payToot">Тоот эсвэл утасны дугаар</label>
-    <input type="text" id="payToot" placeholder="Жишээ: 50602 эсвэл 99393474" />
+    <input type="text" id="payToot" inputmode="numeric" placeholder="Жишээ: 50602 эсвэл 99393474" />
 
-    <button id="payFindBtn" style="background:var(--teal, #0f6b73);">Хайх</button>
+    <button id="payFindBtn" type="button" class="secondary">Хайх</button>
 
-    <div id="payResult" style="display:none; margin-top:16px; padding:14px; background:#fff; border:1px solid var(--line); border-radius:4px;">
-      <div id="payInfo" style="font-family:'IBM Plex Mono', monospace; font-size:13px; margin-bottom:12px;"></div>
-      <button id="payToggleBtn" style="margin-top:0;">—</button>
+    <div id="payResult" class="pay-result">
+      <div id="payInfo" class="pay-info"></div>
+      <button id="payToggleBtn" type="button">—</button>
     </div>
 
-    <div id="payLog" class="log"></div>
-  </div>
+    <div id="payLog" class="log" role="status" aria-live="polite"></div>
+  </section>
 
-  <div class="card" id="summaryCard" style="display:none; margin-top:18px;">
-    <div class="section-title">Нэгтгэл (мөнгөн дүнгийн товч) импортлох</div>
-    <div style="font-size:12.5px; color:#5a5142; margin-bottom:10px;">Тоолуурын задаргаагүй, зөвхөн Төлбөр/Төлөлт/Үлдэгдэлийн "нэгтгэл" маягийн файлд зориулагдсан.</div>
+  <section class="card" id="summaryCard" style="display:none;">
+    <h2 class="section-title">Нэгтгэл импортлох</h2>
+    <p class="help">Тоолуурын задаргаагүй, зөвхөн Төлбөр / Төлөлт / Үлдэгдэл бүхий «нэгтгэл» маягийн файлд зориулагдсан.</p>
 
     <label for="sumYear">Он</label>
-    <input type="text" id="sumYear" placeholder="Жишээ: 2026" value="2026" />
+    <input type="text" id="sumYear" inputmode="numeric" placeholder="Жишээ: 2026" value="2026" />
 
-    <label for="sumMonths">Аль саруудыг импортлох вэ (таслалаар)</label>
+    <label for="sumMonths">Импортлох сарууд (таслалаар)</label>
     <input type="text" id="sumMonths" placeholder="Жишээ: 1,2,3,4,5" value="1,2,3,4,5" />
 
     <label for="sumFile">Нэгтгэл Excel файл (.xlsx)</label>
     <input type="file" id="sumFile" accept=".xlsx,.xls" />
 
-    <button id="sumUploadBtn">Импортлох</button>
+    <button id="sumUploadBtn" type="button">Импортлох</button>
 
-    <div id="sumLog" class="log"></div>
+    <div id="sumLog" class="log" role="status" aria-live="polite"></div>
+  </section>
   </div>
 </div>
 
@@ -481,7 +651,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
       log(payload.length + ' тоот олдлоо.');
       if (!payload.length) throw new Error('Дата мөр олдсонгүй.');
       await upsertRows(payload, log);
-      log(sar + ' сарын задаргаа амжилттай орлоо ✓', 'ok');
+      log(sar + ' сарын задаргаа амжилттай орлоо', 'ok');
       btn.disabled = false; return;
     }
 
@@ -498,7 +668,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
       log(payload.length + ' мөр бэлдлээ.');
       if (!payload.length) throw new Error('Сонгосон сар(ууд)-т дүн бөглөгдөөгүй байна.');
       await upsertRows(payload, log);
-      log('Дата амжилттай орлоо ✓', 'ok');
+      log('Дата амжилттай орлоо', 'ok');
       btn.disabled = false; return;
     }
 
@@ -558,15 +728,18 @@ document.getElementById('payFindBtn').addEventListener('click', async () => {
   const badge = row.paid
     ? '<span class="pay-badge paid">Төлсөн</span>'
     : '<span class="pay-badge unpaid">Төлөөгүй</span>';
+  // Нэр, утас Excel-ээс ирдэг тул HTML болгон оруулахаас өмнө escape хийнэ.
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   document.getElementById('payInfo').innerHTML =
-    'Тоот ' + row.toot + ' — ' + name + '<br>' +
-    'Утас: ' + (row.utas || '—') + '<br>' +
+    'Тоот ' + esc(row.toot) + ' — ' + esc(name) + '<br>' +
+    'Утас: ' + esc(row.utas || '—') + '<br>' +
     'Нийт төлбөр: ' + (row.niit_tolbor ?? '—') + ' ₮<br>' +
     'Төлөв: ' + badge +
     (row.paid_at ? '<br>Огноо: ' + new Date(row.paid_at).toLocaleString('mn-MN') : '');
 
   const toggleBtn = document.getElementById('payToggleBtn');
   toggleBtn.textContent = row.paid ? 'Төлөөгүй болгох' : 'Төлсөн гэж тэмдэглэх';
+  toggleBtn.classList.toggle('secondary', !!row.paid);   // буцаах үйлдэл хоёрдогч товч
   document.getElementById('payResult').style.display = 'block';
 });
 
@@ -637,7 +810,7 @@ document.getElementById('sumUploadBtn').addEventListener('click', async () => {
     sumLog(payload.length + ' мөр бэлдлээ, бичиж байна…');
 
     await upsertRows(payload, sumLog);
-    sumLog('Амжилттай орлоо ✓', 'ok');
+    sumLog('Амжилттай орлоо', 'ok');
   } catch (e){
     sumLog('Алдаа гарлаа: ' + e.message, 'err');
   }
