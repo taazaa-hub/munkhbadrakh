@@ -65,11 +65,15 @@ Deno.serve(async (req) => {
       requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
 
-    const { data: inv } = await db
+    const { data: inv, error: invErr } = await db
       .from("qpay_invoices")
       .select("id,sar,toot,amount,status")
       .eq("qpay_invoice_id", p.object_id)
       .maybeSingle();
+    if (invErr) {
+      console.error("qpay_invoices select error", invErr);
+      return new Response("retry", { status: 500 });
+    }
     if (!inv) {
       console.error("unknown invoice", p.object_id);
       return ok();
@@ -82,16 +86,27 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    // water_bills-ийг ЭХЛЭЭД шинэчилнэ: амжилтгүй бол 500 буцааж QPay-ээр дахин
+    // дуудуулна. Нэхэмжлэхийг эхэлж PAID болговол дахин дуудлага "давхар
+    // callback" гэж алгасагдаж, айлын төлбөр хэзээ ч "төлсөн" болохгүй.
     const now = new Date().toISOString();
-    await db
-      .from("qpay_invoices")
-      .update({ status: "PAID", qpay_payment_id: paymentId, paid_at: now })
-      .eq("id", inv.id);
-    await db
+    const { error: billErr } = await db
       .from("water_bills")
       .update({ paid: true, paid_at: now })
       .eq("sar", inv.sar)
       .eq("toot", inv.toot);
+    if (billErr) {
+      console.error("water_bills update error", billErr);
+      return new Response("retry", { status: 500 });
+    }
+    const { error: updErr } = await db
+      .from("qpay_invoices")
+      .update({ status: "PAID", qpay_payment_id: paymentId, paid_at: now })
+      .eq("id", inv.id);
+    if (updErr) {
+      console.error("qpay_invoices update error", updErr);
+      return new Response("retry", { status: 500 });
+    }
 
     return ok();
   } catch (e) {

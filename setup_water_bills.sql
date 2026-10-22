@@ -104,14 +104,22 @@ alter table qpay_invoices enable row level security;
 
 alter table water_bills enable row level security;
 
+-- Айлууд зөвхөн get_bill / list_months RPC-ээр (security definer) уншина.
+-- Шууд хүснэгтэд хандах эрхийг зөвхөн нэвтэрсэн админд өгнө. Өмнө нь энд
+-- "public" (anon) уншиж/бичиж болох бодлого байсан: publishable key-тэй хэн ч
+-- бүх айлын мэдээллийг харж, paid = true болгох боломжтой байв.
 drop policy if exists "public read" on water_bills;
-create policy "public read" on water_bills
-  for select using (true);
-
 drop policy if exists "public write" on water_bills;
-create policy "public write" on water_bills
-  for insert with check (true);
-
 drop policy if exists "public update" on water_bills;
-create policy "public update" on water_bills
-  for update using (true);
+
+drop policy if exists "admin read" on water_bills;
+create policy "admin read" on water_bills
+  for select to authenticated using (true);
+
+drop policy if exists "admin write" on water_bills;
+create policy "admin write" on water_bills
+  for insert to authenticated with check (true);
+
+drop policy if exists "admin update" on water_bills;
+create policy "admin update" on water_bills
+  for update to authenticated using (true) with check (true);

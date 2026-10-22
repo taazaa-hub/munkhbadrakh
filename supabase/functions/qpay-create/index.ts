@@ -60,15 +60,18 @@ Deno.serve(async (req) => {
       requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
 
-    const { data: bill } = await db
-      .from("water_bills")
-      .select("sar,toot,utas,niit_tolbor,paid")
-      .eq("sar", sar)
-      .eq("utas", utas)
-      .order("toot", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    // index.html-тэй ЯГ адил мөрийг олохын тулд ижил get_bill RPC-г ашиглана
+    // (утасны дугаарыг DB талд цэвэрлэж харьцуулдаг).
+    const { data: bill, error: billErr } = await db.rpc("get_bill", {
+      p_sar: sar,
+      p_utas: utas,
+    });
 
+    // DB алдааг "олдсонгүй"-тэй андуурахгүй (жишээ нь paid багана дутуу үед).
+    if (billErr) {
+      console.error("water_bills select error", billErr);
+      return json({ error: "Серверийн алдаа" }, 500);
+    }
     if (!bill) return json({ error: "Бүртгэл олдсонгүй" }, 404);
     if (bill.paid) return json({ error: "Энэ сарын төлбөр төлөгдсөн байна" }, 409);
 
@@ -121,7 +124,8 @@ Deno.serve(async (req) => {
       deeplinks: d.urls ?? d.qPay_deeplink ?? [],
     };
 
-    await db.from("qpay_invoices").insert({
+    // Энэ мөр байхгүй бол callback нэхэмжлэхийг танихгүй тул алдааг шалгана.
+    const { error: insErr } = await db.from("qpay_invoices").insert({
       sar,
       toot: bill.toot,
       amount,
@@ -129,6 +133,10 @@ Deno.serve(async (req) => {
       qpay_invoice_id: d.invoice_id,
       qpay_response: result,
     });
+    if (insErr) {
+      console.error("qpay_invoices insert error", insErr);
+      return json({ error: "Серверийн алдаа" }, 500);
+    }
 
     return json({ ...result, amount });
   } catch (e) {

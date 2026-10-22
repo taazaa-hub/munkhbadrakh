@@ -98,10 +98,15 @@ Admin upload нь файл дотор байгаа бүх сарын баган�
 
 QPay API v2 collection-ий merchant endpoint-уудтай нийцүүлж Edge Function-ууд `/v2/auth/token`, `/v2/invoice`, `/v2/payment/{payment_id}` endpoint ашиглана. Дансны мэдээллийг collection-оос биш өөрийн QPay merchant-аас авна.
 
-`qpay-create` болон `qpay-callback` хоёр function-д Supabase secrets болгон дараах утгуудыг тохируулна: `QPAY_USERNAME`, `QPAY_PASSWORD`, `QPAY_INVOICE_CODE`, `CALLBACK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. `QPAY_BASE`-г тохируулаагүй үед `https://merchant.qpay.mn` production endpoint ашиглана. Sandbox-д шалгах бол `QPAY_BASE=https://merchant-sandbox.qpay.mn` тохируулна.
+`qpay-create` болон `qpay-callback` хоёр function-д Supabase secrets болгон дараах утгуудыг тохируулна: `QPAY_USERNAME`, `QPAY_PASSWORD`, `QPAY_INVOICE_CODE`, `CALLBACK_SECRET`. `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`-г Supabase өөрөө function-д өгдөг (`SUPABASE_` гэж эхэлсэн secret-ийг CLI алгасдаг). `QPAY_BASE`-г тохируулаагүй үед `https://merchant.qpay.mn` production endpoint ашиглана. Sandbox-д шалгах бол `QPAY_BASE=https://merchant-sandbox.qpay.mn` тохируулна.
 
 Локал `.env`-ийг linked Supabase project руу sync хийхдээ `supabase secrets set --env-file .env` ажиллуулна. Энэ project-д холбохын өмнө `supabase link --project-ref <project-ref>` шаардлагатай.
 
 Function secrets тохируулсны дараа хоёр Edge Function-ийг дахин deploy хийнэ. `setup_water_bills.sql`-ийг SQL Editor дээр ажиллуулсан байх шаардлагатай.
 
-`qpay-callback` нь QPay-ээс шууд дуудагддаг тул Supabase JWT баталгаажуулалтыг унтрааж deploy хийх хэрэгтэй: `supabase functions deploy qpay-callback --no-verify-jwt`. `qpay-create`-ийг энгийнээр deploy хийнэ: `supabase functions deploy qpay-create`.
+`qpay-callback` нь QPay-ээс шууд дуудагддаг тул JWT баталгаажуулалт унтарсан байх ёстой. Үүнийг `supabase/config.toml` дахь `[functions.qpay-callback] verify_jwt = false` тохируулдаг тул энгийнээр deploy хийнэ: `supabase functions deploy qpay-create` болон `supabase functions deploy qpay-callback`.
+
+## Migration ба автомат deploy
+
+- DB-ийн өөрчлөлт бүр `supabase/migrations/<timestamp>_<нэр>.sql` файлаар орно. Live DB руу `supabase db push` (эсвэл GitHub Actions) хийнэ. `setup_water_bills.sql`-ийг live DB дээр дахин бүтнээр нь ажиллуулахгүй.
+- `.github/workflows/supabase-deploy.yml` нь `main` руу `supabase/` доторх өөрчлөлт push хийгдэх бүрд migration push хийж, хоёр function-ийг deploy хийнэ. Repo secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF`.

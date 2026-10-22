@@ -1,0 +1,47 @@
+# main руу supabase/ доторх өөрчлөлт орох бүрд:
+#   1) supabase/migrations/ доторх шинэ migration-ийг live DB руу push хийнэ
+#   2) Edge Function-уудыг deploy хийнэ (verify_jwt тохиргоог config.toml-оос авна)
+#
+# Repo → Settings → Secrets and variables → Actions дээр шаардлагатай:
+#   SUPABASE_ACCESS_TOKEN  — supabase.com/dashboard/account/tokens
+#   SUPABASE_DB_PASSWORD   — Project Settings → Database
+#   SUPABASE_PROJECT_REF   — dbrcjihawfrhshpxijhn
+# QPAY_* болон CALLBACK_SECRET-ийг энд биш, нэг удаа `supabase secrets set`-ээр тохируулна.
+name: Supabase deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/supabase-deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Push migrations
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Deploy Edge Functions
+        run: |
+          supabase functions deploy qpay-create --project-ref "$SUPABASE_PROJECT_REF"
+          supabase functions deploy qpay-callback --project-ref "$SUPABASE_PROJECT_REF"
